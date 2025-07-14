@@ -1,0 +1,27 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# MacOS
+.DS_Store
+
+# VSCode / IDE
+.vscode/
+.idea/
+
+# Patched output folder
+patched/
+
+# Temporary files
+*.tmp
+*.log
+
+# OS generated files
+Thumbs.db
+
+
+# other dirs
+Documents/
+mitsuba3-util/
