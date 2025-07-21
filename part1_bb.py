@@ -1,5 +1,8 @@
-import sys 
+import sys
 import os
+import json
+import math
+import shutil
 
 def compute_bbox_and_center(obj_file):
     min_x = float('inf')
@@ -37,10 +40,10 @@ def compute_bbox_and_center(obj_file):
 
     return bbox, center
 
-def get_moved_filename(input_filename):
-    base, ext = os.path.splitext(input_filename)
-    return f"{base}_moved{ext}"
-
+def get_temp_filename(input_filename, suffix):
+    base = os.path.basename(input_filename)
+    name, ext = os.path.splitext(base)
+    return os.path.join("temp", f"{name}_{suffix}{ext}")
 
 def move_object_to_center(object_file, current_center, destination_center, output_file):
     cx, cy, cz = current_center
@@ -57,7 +60,6 @@ def move_object_to_center(object_file, current_center, destination_center, outpu
             else:
                 f_out.write(line)
 
-                
 def compute_scale_factor_from_bbox(bbox_obj, bbox_dest):
     size_obj_x = bbox_obj['max_x'] - bbox_obj['min_x']
     size_obj_y = bbox_obj['max_y'] - bbox_obj['min_y']
@@ -74,9 +76,7 @@ def compute_scale_factor_from_bbox(bbox_obj, bbox_dest):
     scale_y = size_dest_y / size_obj_y
     scale_z = size_dest_z / size_obj_z
 
-    scale_factor = min(scale_x, scale_y, scale_z)
-
-    return scale_factor
+    return min(scale_x, scale_y, scale_z)
 
 def scale_object(object_file, scale_factor, output_file):
     with open(object_file, 'r') as f_in, open(output_file, 'w') as f_out:
@@ -90,45 +90,97 @@ def scale_object(object_file, scale_factor, output_file):
             else:
                 f_out.write(line)
 
+def rotate_object(object_file, rotation_angles, output_file):
+    rx = math.radians(rotation_angles.get('x', 0))
+    ry = math.radians(rotation_angles.get('y', 0))
+    rz = math.radians(rotation_angles.get('z', 0))
+
+    cos_x = math.cos(rx)
+    sin_x = math.sin(rx)
+    cos_y = math.cos(ry)
+    sin_y = math.sin(ry)
+    cos_z = math.cos(rz)
+    sin_z = math.sin(rz)
+
+    with open(object_file, 'r') as f_in, open(output_file, 'w') as f_out:
+        for line in f_in:
+            parts = line.strip().split()
+            if parts and parts[0] == 'v':
+                x = float(parts[1])
+                y = float(parts[2])
+                z = float(parts[3])
+
+                # Rotate around X
+                y_new = y * cos_x - z * sin_x
+                z_new = y * sin_x + z * cos_x
+                y, z = y_new, z_new
+
+                # Rotate around Y
+                x_new = x * cos_y + z * sin_y
+                z_new = -x * sin_y + z * cos_y
+                x, z = x_new, z_new
+
+                # Rotate around Z
+                x_new = x * cos_z - y * sin_z
+                y_new = x * sin_z + y * cos_z
+                x, y = x_new, y_new
+
+                f_out.write(f"v {x} {y} {z}\n")
+            else:
+                f_out.write(line)
 
 def main():
-    if len(sys.argv) != 3:
-        print("Usage: python move_into.py <object_to_move.obj> <destination.obj>")
+    if len(sys.argv) != 2:
+        print("Usage: python move_into.py <config.json>")
         sys.exit(1)
 
-    object_to_move = sys.argv[1]
-    destination = sys.argv[2]
+    config_file = sys.argv[1]
 
-    # Compute bounding box and center for both objects
-    bbox_move, center_move = compute_bbox_and_center(object_to_move)
-    bbox_dest, center_dest = compute_bbox_and_center(destination)
+    with open(config_file, 'r') as f:
+        config = json.load(f)
 
-    # Compute scale factor
-    scale = compute_scale_factor_from_bbox(bbox_move, bbox_dest)
-    print(f"Scale factor: {scale}")
+    object_to_move = config.get("object_to_move")
+    destination = config.get("destination")
 
-    # Scale the object to move and save it to a temporary file
-    scaled_filename = get_moved_filename(object_to_move)
-    scale_object(object_to_move, scale, scaled_filename)
+    if not object_to_move or not destination:
+        print("Error: 'object_to_move' and 'destination' must be specified in the config file.")
+        sys.exit(1)
 
-    # Re-compute bounding box and center for the scaled object
-    _, center_scaled = compute_bbox_and_center(scaled_filename)
-
-    # Create the patched dir if it doesn't exist
+    os.makedirs("temp", exist_ok=True)
     os.makedirs("patched", exist_ok=True)
 
-    # Move the scaled object to the center of the destination object
-    final_output = os.path.join("patched", os.path.basename(scaled_filename))
-    move_object_to_center(scaled_filename, center_scaled, center_dest, final_output)
+    # Compute bounding boxes and centers
+    bbox_move, _ = compute_bbox_and_center(object_to_move)
+    bbox_dest, center_dest = compute_bbox_and_center(destination)
 
-    print(f"Final moved & scaled object saved to {final_output}")
+    # Scale
+    scale = compute_scale_factor_from_bbox(bbox_move, bbox_dest)
+    print(f"Scale factor: {scale}")
+    scaled_file = get_temp_filename(object_to_move, "scaled")
+    scale_object(object_to_move, scale, scaled_file)
 
-    # Clean up the temporary scaled file
-    if os.path.exists(scaled_filename):
-        os.remove(scaled_filename)
- 
-    
-if __name__ == "__main__":    
+    # Optional rotation
+    if "rotation" in config:
+        rotated_file = get_temp_filename(object_to_move, "rotated")
+        rotate_object(scaled_file, config["rotation"], rotated_file)
+        os.remove(scaled_file)
+        transformed_file = rotated_file
+    else:
+        transformed_file = scaled_file
+
+    # Move
+    _, center_transformed = compute_bbox_and_center(transformed_file)
+    final_output = os.path.join("patched", os.path.basename(object_to_move).replace(".obj", "_moved.obj"))
+    move_object_to_center(transformed_file, center_transformed, center_dest, final_output)
+
+    print(f"Final moved, scaled & rotated object saved to {final_output}")
+
+    # Cleanup
+    if os.path.exists(transformed_file):
+        os.remove(transformed_file)
+
+    if os.path.exists("temp"): 
+        shutil.rmtree("temp")
+
+if __name__ == "__main__":
     main()
-                
-            

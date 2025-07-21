@@ -1,0 +1,9 @@
+{
+  "object_to_move": "./object_files/cube.obj",
+  "destination": "./object_files/cylinder.obj",
+  "rotation": {
+    "x": 30,
+    "y": 45,
+    "z": 0
+  }
+}
