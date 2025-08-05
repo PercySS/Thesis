@@ -149,29 +149,35 @@ def main():
     os.makedirs("temp", exist_ok=True)
     os.makedirs("patched", exist_ok=True)
 
-    # Compute bounding boxes and centers
-    bbox_move, _ = compute_bbox_and_center(object_to_move)
-    bbox_dest, center_dest = compute_bbox_and_center(destination)
+    transformed_file = object_to_move
 
-    # Scale
-    scale = compute_scale_factor_from_bbox(bbox_move, bbox_dest)
-    print(f"Scale factor: {scale}")
-    scaled_file = get_temp_filename(object_to_move, "scaled")
-    scale_object(object_to_move, scale, scaled_file)
-
-    # Optional rotation
+    # Optional rotation first
     if "rotation" in config:
         rotated_file = get_temp_filename(object_to_move, "rotated")
-        rotate_object(scaled_file, config["rotation"], rotated_file)
-        os.remove(scaled_file)
+        rotate_object(object_to_move, config["rotation"], rotated_file)
         transformed_file = rotated_file
-    else:
-        transformed_file = scaled_file
 
-    # Move
-    _, center_transformed = compute_bbox_and_center(transformed_file)
+    # Recompute bbox after rotation
+    bbox_rotated, center_rotated = compute_bbox_and_center(transformed_file)
+    bbox_dest, center_dest = compute_bbox_and_center(destination)
+
+    # Compute scale factor
+    scale = compute_scale_factor_from_bbox(bbox_rotated, bbox_dest)
+    print(f"Scale factor: {scale}")
+
+    # Apply scale
+    scaled_file = get_temp_filename(object_to_move, "scaled")
+    scale_object(transformed_file, scale, scaled_file)
+    if transformed_file != object_to_move:
+        os.remove(transformed_file)
+    transformed_file = scaled_file
+
+    # Recompute center after scale
+    _, center_scaled = compute_bbox_and_center(transformed_file)
+
+    # Move to destination center
     final_output = os.path.join("patched", os.path.basename(object_to_move).replace(".obj", "_moved.obj"))
-    move_object_to_center(transformed_file, center_transformed, center_dest, final_output)
+    move_object_to_center(transformed_file, center_scaled, center_dest, final_output)
 
     print(f"Final moved, scaled & rotated object saved to {final_output}")
 
@@ -181,6 +187,7 @@ def main():
 
     if os.path.exists("temp"): 
         shutil.rmtree("temp")
+
 
 if __name__ == "__main__":
     main()

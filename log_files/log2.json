@@ -1,9 +1,9 @@
 {
-  "object_to_move": "./object_files/photobooth_part_000.obj",
-  "destination": "./object_files/cube.obj",
+  "object_to_move": "./object_files/male.obj",
+  "destination": "./object_files/cylinder.obj",
   "rotation": {
-    "x": 90,
-    "y": 180,
-    "z": 90
+    "x": 0,
+    "y": 0,
+    "z": 0
   }
 }

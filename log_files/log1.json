@@ -1,9 +1,9 @@
 {
-  "object_to_move": "./object_files/cube.obj",
-  "destination": "./object_files/cylinder.obj",
+  "object_to_move": "./object_files/airplane.obj",
+  "destination": "./object_files/sphere.obj",
   "rotation": {
-    "x": 30,
-    "y": 45,
-    "z": 0
+    "x": 135,
+    "y": 40,
+    "z": 70
   }
 }
