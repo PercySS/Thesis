@@ -44,14 +44,13 @@ python part1_bb.py log_files/log1.json
 ## Example Output
 
 Firstly we want to test the transformation of an object. So we just want to move this male figure into a cube but not to rotate it.
-
-![snapshots/male_cylinder_prev00.png](snap1)
+![Alt Text](snapshots/male_cylinder_prev00.png)
 
 We can see that the object is centered and in bounds of the destination object.
-![snapshots/male_cylinder_prev01.png](snap2)
+![Alt Text](snapshots/male_cylinder_after01.png)
 
 Now another example with rotation. We want to move the airplane into a sphere and rotate it.
-![snapshots/plane_sphere_prev00.png](snap3)
+![Alt Text](snapshots/plane_sphere_prev00.png)
 
 We can see that the object is centered and in bounds of the destination object.
-![snapshots/plane_sphere_prev01.png](snap4)
+![Alt Text](snapshots/plane_sphere_after00.png)
