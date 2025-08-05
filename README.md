@@ -68,3 +68,5 @@ Now another example with rotation. We want to move the airplane into a sphere an
 
 We can see that the object is centered and in bounds of the destination object.
 ![Alt Text](snapshots/plane_sphere_after00.png)
+
+You can find the whole analytical thesis report ![here](snapshots/Thesis.pdf).
