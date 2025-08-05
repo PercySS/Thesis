@@ -41,6 +41,20 @@ python part1_bb.py log_files/log1.json
 - Position in the correct center of the destination object.
 - 3d object is saved in the `patched/` directory with the name `<object_to_move>_moved.obj`.
 
+## Example Input
+
+Here is an example of a log file that specifies the object to move, the destination object, we do not have rotation in this example:
+
+![Alt Text](snapshots/log_no_rot.png)
+
+OR
+
+![Alt Text](snapshots/log_no_rot2.png)
+
+If we want to rotate the object, we can specify the rotation in the log file (in degrees):
+
+![Alt Text](snapshots/log_rot.png)
+
 ## Example Output
 
 Firstly we want to test the transformation of an object. So we just want to move this male figure into a cube but not to rotate it.
