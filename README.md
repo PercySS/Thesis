@@ -1,8 +1,8 @@
 # This is a repo for my thesis project
 
-## First Part
+## Topic
 
-Python tool for transfomring '.obj' files:
+Python tool for '.obj' files transformation and manipulation:
 
 - It does uniform scaling so objects can be fitted into destination objects and not be distorted.
 - Moves the objects in the center of the destination object so it is aligned.
@@ -11,7 +11,7 @@ Python tool for transfomring '.obj' files:
 ## Usage
 
 ````bash
-python part1_bb.py log_file.json
+python tool.py log_file.json
 ````
 
 The results are saved in directory `patched/` with the name `<object_to_move>_moved.obj`.
@@ -19,7 +19,7 @@ The results are saved in directory `patched/` with the name `<object_to_move>_mo
 ## Example
 
 ````bash
-python part1_bb.py log_files/log1.json
+python tool.py log_files/log1.json
 ````
 
 ## Requirements
