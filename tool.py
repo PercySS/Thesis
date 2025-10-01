@@ -131,52 +131,103 @@ def rotate_object(object_file, rotation_angles, output_file):
                 
                 
 def make_renderer_config(object_file):
-    # make folder mits_configs if it doesn't exist
-    os.makedirs("mits_configs", exist_ok=True)
-    
-    # open with write json file
+    os.makedirs("mits_config", exist_ok=True)
+
     base = os.path.basename(object_file)
     name, ext = os.path.splitext(base)
-    config_path = os.path.join("mits_configs", f"{name}_config.json")
-    config = {
-        "use_gpu": "false",
-        "disable_cpu_parallelization": "true",
+    obj_type = "ply" if ext.lower() == ".ply" else "obj"
+
+    # Folder for this object
+    obj_folder = os.path.join("mits_config", name)
+    os.makedirs(obj_folder, exist_ok=True)
+
+    # --- Config 1: rotation video ---
+    config1 = {
+        "use_gpu": False,
+        "disable_cpu_parallelization": True,
         "output": {
-            "type": "image",
-            "rotation_axis": [0,0,1],
-            "rotation_degrees": 0,
-            "rotation_step":0,
+            "type": "rotation_video",
+            "rotation_axis": [0, 0, 1],
+            "rotation_degrees": 360,
+            "rotation_step": 10,
             "fov": 45,
-            "up_axis": [0,1,0],
-            "camera_axis": [0,0,1],
+            "up_axis": [0, 0, 1],
             "width": 512,
             "height": 512,
             "samples_per_pixel": 224,
-            "add_floor": "true",
-            "add_background": "false",
-            "results_folder": "",
-            "results_filename": "test.png"
-        }, 
-            "objects":[
-                {
-                    "filename": object_file,
-                    "type":"ply",
-                    "material": {
+            "add_floor": True,
+            "add_background": False,
+            "results_folder": ""
+        },
+        "objects": [
+            {
+                "name": name,
+                "filename": object_file,
+                "type": obj_type,
+                "material": {
                     "type": "glass",
                     "color": [0.871, 0.804, 0.961]
                 }
             }
         ],
-        "lights":
+        "lights": [
             {
                 "name": "light2",
                 "emitter_type": "envmap",
-                "filename":"envmaps/christmas_photo_studio_4k_resized.hdr"
+                "filename": "envmaps/christmas_photo_studio_4k_resized.hdr"
             }
+        ]
     }
-    with open(config_path, 'w') as f:
-        json.dump(config, f, indent=4)
-    print(f"Renderer config saved to {config_path}")
+
+    # --- Config 2: static image ---
+    config2 = {
+        "output": {
+            "type": "image",
+            "rotation_axis": [0, 0, 1],
+            "rotation_degrees": 0,
+            "rotation_step": 0,
+            "fov": 45,
+            "up_axis": [0, 1, 0],
+            "camera_axis": [0, 0, 1],
+            "width": 512,
+            "height": 512,
+            "samples_per_pixel": 224,
+            "add_floor": True,
+            "add_background": False,
+            "results_folder": "",
+            "results_filename": "test.png"
+        },
+        "objects": [
+            {
+                "filename": object_file,
+                "type": obj_type,
+                "material": {
+                    "type": "glass",
+                    "color": [0.871, 0.804, 0.961]
+                }
+            }
+        ],
+        "lights": [
+            {
+                "name": "light2",
+                "emitter_type": "envmap",
+                "filename": "envmaps/christmas_photo_studio_4k_resized.hdr"
+            }
+        ]
+    }
+
+    # Save both configs
+    config1_file = os.path.join(obj_folder, "config1.json")
+    config2_file = os.path.join(obj_folder, "config2.json")
+
+    with open(config1_file, "w") as f:
+        json.dump(config1, f, indent=2)
+    with open(config2_file, "w") as f:
+        json.dump(config2, f, indent=2)
+
+    print(f"Renderer configs saved to:\n- {config1_file}\n- {config2_file}")
+    return config1_file, config2_file
+
     
 
 
@@ -238,6 +289,8 @@ def main():
 
     if os.path.exists("temp"): 
         shutil.rmtree("temp")
+        
+    make_renderer_config(final_output)
 
 
 if __name__ == "__main__":
