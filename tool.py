@@ -128,6 +128,57 @@ def rotate_object(object_file, rotation_angles, output_file):
                 f_out.write(f"v {x} {y} {z}\n")
             else:
                 f_out.write(line)
+                
+                
+def make_renderer_config(object_file):
+    # make folder mits_configs if it doesn't exist
+    os.makedirs("mits_configs", exist_ok=True)
+    
+    # open with write json file
+    base = os.path.basename(object_file)
+    name, ext = os.path.splitext(base)
+    config_path = os.path.join("mits_configs", f"{name}_config.json")
+    config = {
+        "use_gpu": "false",
+        "disable_cpu_parallelization": "true",
+        "output": {
+            "type": "image",
+            "rotation_axis": [0,0,1],
+            "rotation_degrees": 0,
+            "rotation_step":0,
+            "fov": 45,
+            "up_axis": [0,1,0],
+            "camera_axis": [0,0,1],
+            "width": 512,
+            "height": 512,
+            "samples_per_pixel": 224,
+            "add_floor": "true",
+            "add_background": "false",
+            "results_folder": "",
+            "results_filename": "test.png"
+        }, 
+            "objects":[
+                {
+                    "filename": object_file,
+                    "type":"ply",
+                    "material": {
+                    "type": "glass",
+                    "color": [0.871, 0.804, 0.961]
+                }
+            }
+        ],
+        "lights":
+            {
+                "name": "light2",
+                "emitter_type": "envmap",
+                "filename":"envmaps/christmas_photo_studio_4k_resized.hdr"
+            }
+    }
+    with open(config_path, 'w') as f:
+        json.dump(config, f, indent=4)
+    print(f"Renderer config saved to {config_path}")
+    
+
 
 def main():
     if len(sys.argv) != 2:
